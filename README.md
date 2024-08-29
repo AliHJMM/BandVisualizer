@@ -5,6 +5,9 @@ BandVisualizer is a web application designed to display detailed information abo
 
 The application allows users to interact with the data through events and actions that trigger server communication, ensuring dynamic and up-to-date information display. The backend is developed in Go, adhering to best practices, ensuring robustness, and avoiding crashes.
 
+## 💻 Tech Stack:
+![Go](https://img.shields.io/badge/go-%2300ADD8.svg?style=for-the-badge&logo=go&logoColor=white)
+
 ## AUTHORS
 - [Ali Hasan Jasim](https://github.com/AliHJMM)
 - [Habib Mansoor](https://github.com/7abib04)
