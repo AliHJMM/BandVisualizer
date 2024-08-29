@@ -11,6 +11,6 @@ func main() {
 	http.HandleFunc("/", server.HomeHandler)
 	http.HandleFunc("/details", server.DetailsHandler)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	fmt.Println("Server running at http://localhost:8080")
+	fmt.Println("Server running at http://localhost:2004")
 	log.Fatal(http.ListenAndServe(":2004", nil))
 }
