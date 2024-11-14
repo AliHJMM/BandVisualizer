@@ -1,74 +1,205 @@
+<!-- server/static/html/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Artist Cards</title>
-<link rel="stylesheet" type="text/css" href="/static/css/index.css">
-<link rel="stylesheet" type="text/css"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <!-- Existing head content -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artist Cards</title>
+    <link rel="stylesheet" type="text/css" href="/static/css/index.css">
+    <link rel="stylesheet" type="text/css"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body>
-<div id="hero" class="hero-img">
-    <div class="hero-text">
-        <h1>GROUPIE TRACKER</h1>
-        <!-- Search Bar -->
-<div class="search-container">
-    <form action="/search" method="GET">
-        <input type="text" id="searchInput" name="query" placeholder="Search for artists, members, locations..." oninput="getSuggestions()" list="suggestionsList" autocomplete="off" required>
-        <datalist id="suggestionsList"></datalist>
-        <button type="submit"><i class="fa fa-search"></i></button>
-    </form>
-</div>
-
-        <button class="discover-button" onclick="scrollToCards()">
-            <span><i class="fa-solid fa-arrow-down"></i></span>
-        </button>
-    </div>
-</div>
-
-<div id="artistCards">
-    {{range .}}
-    <a href="/details?id={{.ID}}">
-        <div class="card">
-            <div class="container">
-                <h4>{{.Name}}</h4>
-                <img src="{{.Image}}" alt="{{.Name}}" style="width:100%" loading="lazy">
+    <div id="hero" class="hero-img">
+        <div class="hero-text">
+            <h1>GROUPIE TRACKER</h1>
+            <!-- Search Bar -->
+            <div class="search-container">
+                <form action="/search" method="GET">
+                    <input type="text" id="searchInput" name="query" placeholder="Search for artists, members, locations..." oninput="getSuggestions()" list="suggestionsList" autocomplete="off" required>
+                    <datalist id="suggestionsList"></datalist>
+                    <button type="submit"><i class="fa fa-search"></i></button>
+                </form>
             </div>
+            <button class="discover-button" onclick="scrollToCards()">
+                <span><i class="fa-solid fa-arrow-down"></i></span>
+            </button>
         </div>
-    </a>
-    {{end}}
-</div>
+    </div>
 
-<script>
-    function scrollToCards() {
-        const cardsSection = document.getElementById('artistCards');
-        cardsSection.scrollIntoView({ behavior: 'smooth' });
-    }
+    <!-- Filter Form -->
+    <div class="filter-form">
+        <form method="GET" action="/" id="filterForm">
+            <!-- Creation Date Range Filter -->
+            <div class="filter-section">
+                <label for="minCreationDate">Creation Date From:</label>
+                <div class="range-container">
+                    <input type="range" id="minCreationDate" name="minCreationDate" min="{{.FilterOptions.MinCreationDate}}" max="{{.FilterOptions.MaxCreationDate}}" value="{{.FilterOptions.MinCreationDate}}" oninput="updateMinCreationDateValue(this.value)">
+                    <span id="minCreationDateValue">{{getParam "minCreationDate"}}</span>
+                </div>
+                <label for="maxCreationDate">To:</label>
+                <div class="range-container">
+                    <input type="range" id="maxCreationDate" name="maxCreationDate" min="{{.FilterOptions.MinCreationDate}}" max="{{.FilterOptions.MaxCreationDate}}" value="{{.FilterOptions.MaxCreationDate}}" oninput="updateMaxCreationDateValue(this.value)">
+                    <span id="maxCreationDateValue">{{getParam "maxCreationDate"}}</span>
+                </div>
+            </div>
 
-    function getSuggestions() {
-        const searchInput = document.getElementById('searchInput');
-        const suggestionsList = document.getElementById('suggestionsList');
-        const query = searchInput.value;
+            <!-- First Album Year Range Filter -->
+            <div class="filter-section">
+                <label for="minFirstAlbumYear">First Album Year From:</label>
+                <div class="range-container">
+                    <input type="range" id="minFirstAlbumYear" name="minFirstAlbumYear" min="{{.FilterOptions.MinFirstAlbumYear}}" max="{{.FilterOptions.MaxFirstAlbumYear}}" value="{{.FilterOptions.MinFirstAlbumYear}}" oninput="updateMinFirstAlbumYearValue(this.value)">
+                    <span id="minFirstAlbumYearValue">{{getParam "minFirstAlbumYear"}}</span>
+                </div>
+                <label for="maxFirstAlbumYear">To:</label>
+                <div class="range-container">
+                    <input type="range" id="maxFirstAlbumYear" name="maxFirstAlbumYear" min="{{.FilterOptions.MinFirstAlbumYear}}" max="{{.FilterOptions.MaxFirstAlbumYear}}" value="{{.FilterOptions.MaxFirstAlbumYear}}" oninput="updateMaxFirstAlbumYearValue(this.value)">
+                    <span id="maxFirstAlbumYearValue">{{getParam "maxFirstAlbumYear"}}</span>
+                </div>
+            </div>
 
-        if (query.length === 0) {
-            suggestionsList.innerHTML = "";
-            return;
+            <!-- Number of Members Checkbox Filter -->
+            <div class="filter-section">
+                <label>Number of Members:</label><br>
+                {{range .FilterOptions.NumberOfMembers}}
+                    <input type="checkbox" name="members" value="{{.}}" {{if isChecked . $.SelectedMembers}}checked{{end}}>{{.}}<br>
+                {{end}}
+            </div>
+
+            <!-- Locations Filter -->
+            <div class="filter-section">
+                <label for="locations">Locations:</label><br>
+                <select name="locations" id="locations">
+                    <option value="">-- Select Location --</option>
+                    {{range .FilterOptions.Locations}}
+                        <option value="{{.}}" {{if isSelected . $.SelectedLoc}}selected{{end}}>{{.}}</option>
+                    {{end}}
+                </select>
+            </div>
+
+            <button type="submit" class="filter-button">Apply Filters</button>
+        </form>
+    </div>
+
+    <!-- Artist Cards Section -->
+    <div id="artistCards">
+        {{if .Artists}}
+            {{range .Artists}}
+                <a href="/details?id={{.ID}}">
+                    <div class="card">
+                        <div class="container">
+                            <h4>{{.Name}}</h4>
+                            <img src="{{.Image}}" alt="{{.Name}}" style="width:100%" loading="lazy">
+                        </div>
+                    </div>
+                </a>
+            {{end}}
+        {{else}}
+            <p class="no-results">No artists found matching the selected filters.</p>
+        {{end}}
+    </div>
+
+    <!-- Existing scripts -->
+    <script>
+        function scrollToCards() {
+            const cardsSection = document.getElementById('artistCards');
+            cardsSection.scrollIntoView({ behavior: 'smooth' });
         }
 
-        fetch(`/suggestions?query=${encodeURIComponent(query)}`)
-            .then(response => response.json())
-            .then(suggestions => {
-                suggestionsList.innerHTML = "";
-                suggestions.forEach(suggestion => {
-                    const option = document.createElement("option");
-                    option.value = suggestion;
-                    suggestionsList.appendChild(option);
-                });
-            })
-            .catch(error => console.error('Error fetching suggestions:', error));
-    }
-</script>
+        function getSuggestions() {
+            const searchInput = document.getElementById('searchInput');
+            const suggestionsList = document.getElementById('suggestionsList');
+            const query = searchInput.value;
 
+            if (query.length === 0) {
+                suggestionsList.innerHTML = "";
+                return;
+            }
+
+            fetch(`/suggestions?query=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(suggestions => {
+                    suggestionsList.innerHTML = "";
+                    suggestions.forEach(suggestion => {
+                        const option = document.createElement("option");
+                        option.value = suggestion;
+                        suggestionsList.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching suggestions:', error));
+        }
+
+        // Functions to update displayed range values
+        function updateMinCreationDateValue(val) {
+            document.getElementById('minCreationDateValue').innerText = val;
+        }
+
+        function updateMaxCreationDateValue(val) {
+            document.getElementById('maxCreationDateValue').innerText = val;
+        }
+
+        function updateMinFirstAlbumYearValue(val) {
+            document.getElementById('minFirstAlbumYearValue').innerText = val;
+        }
+
+        function updateMaxFirstAlbumYearValue(val) {
+            document.getElementById('maxFirstAlbumYearValue').innerText = val;
+        }
+
+        // Initialize displayed values on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const minCreationDate = document.getElementById('minCreationDate').value;
+            const maxCreationDate = document.getElementById('maxCreationDate').value;
+            const minFirstAlbumYear = document.getElementById('minFirstAlbumYear').value;
+            const maxFirstAlbumYear = document.getElementById('maxFirstAlbumYear').value;
+
+            updateMinCreationDateValue(minCreationDate);
+            updateMaxCreationDateValue(maxCreationDate);
+            updateMinFirstAlbumYearValue(minFirstAlbumYear);
+            updateMaxFirstAlbumYearValue(maxFirstAlbumYear);
+        });
+
+        // Synchronize sliders to prevent invalid ranges
+        document.getElementById('minCreationDate').addEventListener('input', function() {
+            var min = parseInt(this.value);
+            var maxSlider = document.getElementById('maxCreationDate');
+            var max = parseInt(maxSlider.value);
+            if (min > max) {
+                maxSlider.value = min;
+                document.getElementById('maxCreationDateValue').innerText = min;
+            }
+        });
+
+        document.getElementById('maxCreationDate').addEventListener('input', function() {
+            var max = parseInt(this.value);
+            var minSlider = document.getElementById('minCreationDate');
+            var min = parseInt(minSlider.value);
+            if (max < min) {
+                minSlider.value = max;
+                document.getElementById('minCreationDateValue').innerText = max;
+            }
+        });
+
+        document.getElementById('minFirstAlbumYear').addEventListener('input', function() {
+            var min = parseInt(this.value);
+            var maxSlider = document.getElementById('maxFirstAlbumYear');
+            var max = parseInt(maxSlider.value);
+            if (min > max) {
+                maxSlider.value = min;
+                document.getElementById('maxFirstAlbumYearValue').innerText = min;
+            }
+        });
+
+        document.getElementById('maxFirstAlbumYear').addEventListener('input', function() {
+            var max = parseInt(this.value);
+            var minSlider = document.getElementById('minFirstAlbumYear');
+            var min = parseInt(minSlider.value);
+            if (max < min) {
+                minSlider.value = max;
+                document.getElementById('minFirstAlbumYearValue').innerText = max;
+            }
+        });
+    </script>
 </body>
 </html>

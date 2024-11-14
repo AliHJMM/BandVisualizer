@@ -20,7 +20,7 @@ body::before {
     /* Remove background image */
     /* background: url("../assets/Crowd.jpg") no-repeat center center fixed; */
     /* background-size: cover; */
-    filter: blur(px); /* Adjust the blur level as needed */
+    filter: blur(5px); /* Adjust the blur level as needed */
     z-index: -1; /* Ensure the pseudo-element is behind all other content */
 }
 
