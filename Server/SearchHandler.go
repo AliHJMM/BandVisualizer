@@ -129,15 +129,3 @@ func parseQuery(query string) (string, string) {
     }
     return strings.TrimSpace(query), ""
 }
-
-func removeDuplicateArtists(artists []API.Artist) []API.Artist {
-    uniqueArtists := make(map[int]API.Artist)
-    for _, artist := range artists {
-        uniqueArtists[artist.ID] = artist
-    }
-    var result []API.Artist
-    for _, artist := range uniqueArtists {
-        result = append(result, artist)
-    }
-    return result
-}
