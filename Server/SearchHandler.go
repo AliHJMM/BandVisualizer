@@ -1,121 +1,143 @@
+// SearchHandler.go
 package server
 
 import (
-	"BandVisualizer/API"
-	"html/template"
-	"net/http"
-	"strconv"
-	"strings"
+    "BandVisualizer/API"
+    "html/template"
+    "net/http"
+    "strconv"
+    "strings"
 )
 
 func SearchHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		renderErrorPage(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		return
-	}
+    if r.Method != "GET" {
+        renderErrorPage(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+        return
+    }
 
-	query := r.URL.Query().Get("query")
-	if query == "" {
-		renderErrorPage(w, "Bad Request: Query parameter is missing", http.StatusBadRequest)
-		return
-	}
+    query := r.URL.Query().Get("query")
+    if query == "" {
+        renderErrorPage(w, "Bad Request: Query parameter is missing", http.StatusBadRequest)
+        return
+    }
 
-	// Parse the query to separate the search term and type if provided
-	searchTerm, searchType := parseQuery(query)
+    // Parse the query to separate the search term and type if provided
+    searchTerm, searchType := parseQuery(query)
 
-	artists, err := API.FetchArtists()
-	if err != nil {
-		renderErrorPage(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+    artists, err := API.FetchArtists()
+    if err != nil {
+        renderErrorPage(w, "Internal Server Error", http.StatusInternalServerError)
+        return
+    }
 
-	// Fetch all locations once to improve performance
-	locationsMap, err := API.FetchAllLocations()
-	if err != nil {
-		renderErrorPage(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+    // Fetch all locations once to improve performance
+    locationsMap, err := API.FetchAllLocations()
+    if err != nil {
+        renderErrorPage(w, "Internal Server Error", http.StatusInternalServerError)
+        return
+    }
 
-	var filteredArtists []API.Artist
-	for _, artist := range artists {
-		matched := false
-		switch searchType {
-		case "artist/band", "":
-			if strings.Contains(strings.ToLower(artist.Name), strings.ToLower(searchTerm)) {
-				matched = true
-			}
-		case "member":
-			for _, member := range artist.Members {
-				if strings.Contains(strings.ToLower(member), strings.ToLower(searchTerm)) {
-					matched = true
-					break
-				}
-			}
-		case "location":
-			locations := locationsMap[artist.ID]
-			for _, loc := range locations.Locations {
-				if strings.Contains(strings.ToLower(loc), strings.ToLower(searchTerm)) {
-					matched = true
-					break
-				}
-			}
-		case "creation date":
-			if strings.Contains(strconv.Itoa(artist.CreationDate), searchTerm) {
-				matched = true
-			}
-		case "first album date":
-			if strings.Contains(strings.ToLower(artist.FirstAlbum), strings.ToLower(searchTerm)) {
-				matched = true
-			}
-		default:
-			// Search all fields if no specific type is provided
-			if strings.Contains(strings.ToLower(artist.Name), strings.ToLower(searchTerm)) ||
-				strings.Contains(strings.ToLower(artist.FirstAlbum), strings.ToLower(searchTerm)) ||
-				strings.Contains(strconv.Itoa(artist.CreationDate), searchTerm) {
-				matched = true
-			}
-			for _, member := range artist.Members {
-				if strings.Contains(strings.ToLower(member), strings.ToLower(searchTerm)) {
-					matched = true
-					break
-				}
-			}
-			locations := locationsMap[artist.ID]
-			for _, loc := range locations.Locations {
-				if strings.Contains(strings.ToLower(loc), strings.ToLower(searchTerm)) {
-					matched = true
-					break
-				}
-			}
-		}
-		if matched {
-			filteredArtists = append(filteredArtists, artist)
-		}
-	}
+    var filteredArtists []API.Artist
+    lowerSearchTerm := strings.ToLower(searchTerm)
 
-	if len(filteredArtists) == 0 {
-		renderErrorPage(w, "No results found for your search.", http.StatusNotFound)
-		return
-	}
+    for _, artist := range artists {
+        matched := false
+        switch searchType {
+        case "artist/band":
+            if strings.Contains(strings.ToLower(artist.Name), lowerSearchTerm) {
+                matched = true
+            }
+        case "member":
+            for _, member := range artist.Members {
+                if strings.Contains(strings.ToLower(member), lowerSearchTerm) {
+                    matched = true
+                    break
+                }
+            }
+        case "location":
+            locations := locationsMap[artist.ID]
+            for _, loc := range locations {
+                if strings.Contains(strings.ToLower(loc), lowerSearchTerm) {
+                    matched = true
+                    break
+                }
+            }
+        case "creation date":
+            if strings.Contains(strconv.Itoa(artist.CreationDate), searchTerm) {
+                matched = true
+            }
+        case "first album date":
+            if strings.Contains(strings.ToLower(artist.FirstAlbum), lowerSearchTerm) {
+                matched = true
+            }
+        default:
+            // Search all fields if no specific type is provided
+            if strings.Contains(strings.ToLower(artist.Name), lowerSearchTerm) ||
+                strings.Contains(strings.ToLower(artist.FirstAlbum), lowerSearchTerm) ||
+                strings.Contains(strconv.Itoa(artist.CreationDate), searchTerm) {
+                matched = true
+            }
+            if !matched {
+                for _, member := range artist.Members {
+                    if strings.Contains(strings.ToLower(member), lowerSearchTerm) {
+                        matched = true
+                        break
+                    }
+                }
+            }
+            if !matched {
+                locations := locationsMap[artist.ID]
+                for _, loc := range locations {
+                    if strings.Contains(strings.ToLower(loc), lowerSearchTerm) {
+                        matched = true
+                        break
+                    }
+                }
+            }
+        }
+        if matched {
+            filteredArtists = append(filteredArtists, artist)
+        }
+    }
 
-	tmpl, err := template.ParseFiles("static/html/index.html")
-	if err != nil {
-		renderErrorPage(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+    if len(filteredArtists) == 0 {
+        renderErrorPage(w, "No results found for your search.", http.StatusNotFound)
+        return
+    }
 
-	err = tmpl.Execute(w, filteredArtists)
-	if err != nil {
-		renderErrorPage(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+    // Remove duplicates from filteredArtists if necessary
+    filteredArtists = removeDuplicateArtists(filteredArtists)
+
+    tmpl, err := template.ParseFiles("static/html/index.html")
+    if err != nil {
+        renderErrorPage(w, "Internal Server Error", http.StatusInternalServerError)
+        return
+    }
+
+    err = tmpl.Execute(w, filteredArtists)
+    if err != nil {
+        renderErrorPage(w, "Internal Server Error", http.StatusInternalServerError)
+        return
+    }
 }
 
 func parseQuery(query string) (string, string) {
-	// Check if query contains " - "
-	parts := strings.Split(query, " - ")
-	if len(parts) == 2 {
-		return strings.TrimSpace(parts[0]), strings.ToLower(strings.TrimSpace(parts[1]))
-	}
-	return strings.TrimSpace(query), ""
+    // Check if query contains " - "
+    parts := strings.Split(query, " - ")
+    if len(parts) == 2 {
+        return strings.TrimSpace(parts[0]), strings.ToLower(strings.TrimSpace(parts[1]))
+    }
+    return strings.TrimSpace(query), ""
+}
+
+func removeDuplicateArtists(artists []API.Artist) []API.Artist {
+    uniqueArtists := make(map[int]API.Artist)
+    for _, artist := range artists {
+        uniqueArtists[artist.ID] = artist
+    }
+    var result []API.Artist
+    for _, artist := range uniqueArtists {
+        result = append(result, artist)
+    }
+    return result
 }
