@@ -12,11 +12,18 @@
 <div id="hero" class="hero-img">
     <div class="hero-text">
         <h1>GROUPIE TRACKER</h1>
+        <!-- Search Bar -->
+<div class="search-container">
+    <form action="/search" method="GET">
+        <input type="text" id="searchInput" name="query" placeholder="Search for artists, members, locations..." oninput="getSuggestions()" list="suggestionsList" autocomplete="off" required>
+        <datalist id="suggestionsList"></datalist>
+        <button type="submit"><i class="fa fa-search"></i></button>
+    </form>
+</div>
+
         <button class="discover-button" onclick="scrollToCards()">
-            
             <span><i class="fa-solid fa-arrow-down"></i></span>
         </button>
-        
     </div>
 </div>
 
@@ -37,6 +44,29 @@
     function scrollToCards() {
         const cardsSection = document.getElementById('artistCards');
         cardsSection.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function getSuggestions() {
+        const searchInput = document.getElementById('searchInput');
+        const suggestionsList = document.getElementById('suggestionsList');
+        const query = searchInput.value;
+
+        if (query.length === 0) {
+            suggestionsList.innerHTML = "";
+            return;
+        }
+
+        fetch(`/suggestions?query=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(suggestions => {
+                suggestionsList.innerHTML = "";
+                suggestions.forEach(suggestion => {
+                    const option = document.createElement("option");
+                    option.value = suggestion;
+                    suggestionsList.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error fetching suggestions:', error));
     }
 </script>
 

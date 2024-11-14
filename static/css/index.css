@@ -168,3 +168,39 @@ a {
         width: 250px; /* Adjust card width for smaller screens */
     }
 }
+/* Add this at the end of your index.css file */
+
+/* Search Bar Styles */
+.search-container {
+    margin-top: 20px;
+}
+
+.search-container form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.search-container input[type="text"] {
+    width: 400px; /* Increase width as needed */
+    padding: 10px;
+    border: 2px solid #ccc;
+    border-radius: 5px 0 0 5px;
+    font-size: 16px;
+}
+
+.search-container button {
+    padding: 10px;
+    background-color: #5f9ef8;
+    border: none;
+    cursor: pointer;
+    border-radius: 0 5px 5px 0;
+}
+
+.search-container button i {
+    color: #fff;
+}
+
+.search-container button:hover {
+    background-color: #4c75af;
+}
