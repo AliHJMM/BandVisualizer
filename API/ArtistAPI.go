@@ -21,6 +21,7 @@ func FetchArtists() ([]Artist, error) {
     artistOnce.Do(func() {
         resp, e := http.Get("https://groupietrackers.herokuapp.com/api/artists")
         if e != nil {
+            log.Println("Error fetching artists:", e)
             err = e
             return
         }
@@ -28,6 +29,7 @@ func FetchArtists() ([]Artist, error) {
 
         var artists []Artist
         if e := json.NewDecoder(resp.Body).Decode(&artists); e != nil {
+            log.Println("Error decoding artists JSON:", e)
             err = e
             return
         }
