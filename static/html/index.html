@@ -1,74 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Artist Cards</title>
-<link rel="stylesheet" type="text/css" href="/static/css/index.css">
-<link rel="stylesheet" type="text/css"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-</head>
-<body>
-<div id="hero" class="hero-img">
-    <div class="hero-text">
-        <h1>GROUPIE TRACKER</h1>
-        <!-- Search Bar -->
-<div class="search-container">
-    <form action="/search" method="GET">
-        <input type="text" id="searchInput" name="query" placeholder="Search for artists, members, locations..." oninput="getSuggestions()" list="suggestionsList" autocomplete="off" required>
-        <datalist id="suggestionsList"></datalist>
-        <button type="submit"><i class="fa fa-search"></i></button>
-    </form>
-</div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>API Visualization Explorer</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎵</text></svg>"
+    />
+    <link rel="stylesheet" href="/static/css/index.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>API Visualization Explorer</h1>
 
-        <button class="discover-button" onclick="scrollToCards()">
-            <span><i class="fa-solid fa-arrow-down"></i></span>
-        </button>
-    </div>
-</div>
-
-<div id="artistCards">
-    {{range .}}
-    <a href="/details?id={{.ID}}">
-        <div class="card">
-            <div class="container">
-                <h4>{{.Name}}</h4>
-                <img src="{{.Image}}" alt="{{.Name}}" style="width:100%" loading="lazy">
-            </div>
+      <div class="card">
+        <div class="search-container">
+          <form action="/search" method="GET" class="search-input">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            <input
+              type="text"
+              id="searchInput"
+              name="query"
+              placeholder="Search for artists, albums, or genres..."
+              oninput="getSuggestions()"
+              list="suggestionsList"
+              autocomplete="off"
+              required
+            />
+            <datalist id="suggestionsList"></datalist>
+          </form>
+          <button class="clear-button" onclick="clearSearch()" type="button">
+            Clear Search
+          </button>
         </div>
-    </a>
-    {{end}}
-</div>
+      </div>
 
-<script>
-    function scrollToCards() {
-        const cardsSection = document.getElementById('artistCards');
-        cardsSection.scrollIntoView({ behavior: 'smooth' });
-    }
+      <div class="card">
+        <h2>Artist Cards</h2>
+        <div class="artist-grid">
+          {{range .}}
+          <a href="/details?id={{.ID}}">
+            <div class="artist-card">
+              <img src="{{.Image}}" alt="{{.Name}}" />
+              <h3>{{.Name}}</h3>
+            </div>
+          </a>
+          {{end}}
+        </div>
+      </div>
+    </div>
 
-    function getSuggestions() {
-        const searchInput = document.getElementById('searchInput');
-        const suggestionsList = document.getElementById('suggestionsList');
+    <script>
+      function clearSearch() {
+        const searchInput = document.getElementById("searchInput");
+        const suggestionsList = document.getElementById("suggestionsList");
+
+        // Clear the search input field and suggestions
+        searchInput.value = "";
+        suggestionsList.innerHTML = "";
+
+        // Redirect to the base URL (this ensures the backend sees no query parameter)
+        window.location.href = "/";
+      }
+
+      function getSuggestions() {
+        const searchInput = document.getElementById("searchInput");
+        const suggestionsList = document.getElementById("suggestionsList");
         const query = searchInput.value;
 
         if (query.length === 0) {
-            suggestionsList.innerHTML = "";
-            return;
+          suggestionsList.innerHTML = ""; // Clear suggestions when input is empty
+          return;
         }
 
         fetch(`/suggestions?query=${encodeURIComponent(query)}`)
-            .then(response => response.json())
-            .then(suggestions => {
-                suggestionsList.innerHTML = "";
-                suggestions.forEach(suggestion => {
-                    const option = document.createElement("option");
-                    option.value = suggestion;
-                    suggestionsList.appendChild(option);
-                });
-            })
-            .catch(error => console.error('Error fetching suggestions:', error));
-    }
-</script>
-
-</body>
+          .then((response) => response.json())
+          .then((suggestions) => {
+            suggestionsList.innerHTML = ""; // Clear existing suggestions
+            suggestions.forEach((suggestion) => {
+              const option = document.createElement("option");
+              option.value = suggestion;
+              suggestionsList.appendChild(option); // Add suggestion to datalist
+            });
+          })
+          .catch((error) =>
+            console.error("Error fetching suggestions:", error)
+          );
+      }
+    </script>
+  </body>
 </html>
