@@ -145,3 +145,20 @@ h1 {
         font-size: 1rem;
     }
 }
+
+a {
+    text-decoration: none;
+    /* Removes the underline */
+    color: inherit;
+    /* Keeps the text color consistent */
+}
+
+a:visited,
+a:active,
+a:hover,
+a:focus {
+    text-decoration: none;
+    /* Prevent underline on other states */
+    color: inherit;
+    /* Prevent color change on other states */
+}
