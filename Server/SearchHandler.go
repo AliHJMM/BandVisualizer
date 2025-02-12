@@ -1,12 +1,11 @@
-// SearchHandler.go
 package server
 
 import (
-    "BandVisualizer/API"
-    "html/template"
-    "net/http"
-    "strconv"
-    "strings"
+	"BandVisualizer/API"
+	"html/template"
+	"net/http"
+	"strconv"
+	"strings"
 )
 
 func SearchHandler(w http.ResponseWriter, r *http.Request) {
@@ -105,16 +104,35 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    // Remove duplicates from filteredArtists if necessary
+    // Remove duplicate artists if needed
     filteredArtists = removeDuplicateArtists(filteredArtists)
+
+    // Aggregate unique locations from locationsMap for the dropdown
+    locationSet := make(map[string]struct{})
+    for _, locs := range locationsMap {
+        for _, loc := range locs {
+            locationSet[loc] = struct{}{}
+        }
+    }
+    var allLocations []string
+    for loc := range locationSet {
+        allLocations = append(allLocations, loc)
+    }
+    // Optionally sort the locations
+    // sort.Strings(allLocations)
+
+    // Wrap the data into a PageData struct as expected by the template
+    data := PageData{
+        Artists:   filteredArtists,
+        Locations: allLocations,
+    }
 
     tmpl, err := template.ParseFiles("static/html/index.html")
     if err != nil {
         renderErrorPage(w, "Internal Server Error", http.StatusInternalServerError)
         return
     }
-
-    err = tmpl.Execute(w, filteredArtists)
+    err = tmpl.Execute(w, data)
     if err != nil {
         renderErrorPage(w, "Internal Server Error", http.StatusInternalServerError)
         return
@@ -122,7 +140,6 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func parseQuery(query string) (string, string) {
-    // Check if query contains " - "
     parts := strings.Split(query, " - ")
     if len(parts) == 2 {
         return strings.TrimSpace(parts[0]), strings.ToLower(strings.TrimSpace(parts[1]))
