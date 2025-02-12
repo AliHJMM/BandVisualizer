@@ -9,11 +9,32 @@
       href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎵</text></svg>"
     />
     <link rel="stylesheet" href="/static/css/index.css" />
+    <style>
+      /* Optional inline styles to improve the range slider layout */
+      .range-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
+      .range-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .range-item span.label {
+        min-width: 40px;
+      }
+      .range-item input[type="range"] {
+        flex-grow: 1;
+      }
+    </style>
   </head>
   <body>
     <div class="container">
       <h1>API Visualization Explorer</h1>
 
+      <!-- Search Form -->
       <div class="card">
         <div class="search-container">
           <form action="/search" method="GET" class="search-input">
@@ -48,6 +69,114 @@
         </div>
       </div>
 
+      <!-- Filter Form with Range Sliders -->
+      <div class="card">
+        <form
+          action="/filter"
+          method="GET"
+          style="
+            margin-bottom: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+          "
+        >
+          <!-- Creation Date Range Filter -->
+          <div class="range-container">
+            <label>Creation Date Range:</label>
+            <div class="range-item">
+              <span class="label">Min:</span>
+              <input
+                type="range"
+                name="creation_min"
+                id="creation_min"
+                min="1900"
+                max="2025"
+                value="1900"
+                oninput="document.getElementById('creation_min_output').textContent = this.value"
+              />
+              <span id="creation_min_output">1900</span>
+            </div>
+            <div class="range-item">
+              <span class="label">Max:</span>
+              <input
+                type="range"
+                name="creation_max"
+                id="creation_max"
+                min="1900"
+                max="2025"
+                value="2025"
+                oninput="document.getElementById('creation_max_output').textContent = this.value"
+              />
+              <span id="creation_max_output">2025</span>
+            </div>
+          </div>
+
+          <!-- First Album Year Range Filter -->
+          <div class="range-container">
+            <label>First Album Year Range:</label>
+            <div class="range-item">
+              <span class="label">Min:</span>
+              <input
+                type="range"
+                name="album_min"
+                id="album_min"
+                min="1900"
+                max="2025"
+                value="1900"
+                oninput="document.getElementById('album_min_output').textContent = this.value"
+              />
+              <span id="album_min_output">1900</span>
+            </div>
+            <div class="range-item">
+              <span class="label">Max:</span>
+              <input
+                type="range"
+                name="album_max"
+                id="album_max"
+                min="1900"
+                max="2025"
+                value="2025"
+                oninput="document.getElementById('album_max_output').textContent = this.value"
+              />
+              <span id="album_max_output">2025</span>
+            </div>
+          </div>
+
+          <!-- Number of Members (Checkbox Filter) -->
+          <div style="margin-bottom: 1rem">
+            <label>Number of Members:</label>
+            <label><input type="checkbox" name="members" value="1" /> 1</label>
+            <label><input type="checkbox" name="members" value="2" /> 2</label>
+            <label><input type="checkbox" name="members" value="3" /> 3</label>
+            <label><input type="checkbox" name="members" value="4" /> 4</label>
+            <label><input type="checkbox" name="members" value="5" /> 5</label>
+            <label><input type="checkbox" name="members" value="6" /> 6</label>
+            <label><input type="checkbox" name="members" value="7" /> 7</label>
+            <label><input type="checkbox" name="members" value="8" /> 8</label>
+          </div>
+
+          <!-- Concert Locations (Checkbox Filter) -->
+          <div style="margin-bottom: 1rem">
+            <label>Concert Locations:</label>
+            <label
+              ><input type="checkbox" name="locations" value="usa" /> USA</label
+            >
+            <label
+              ><input type="checkbox" name="locations" value="europe" />
+              Europe</label
+            >
+            <label
+              ><input type="checkbox" name="locations" value="asia" />
+              Asia</label
+            >
+          </div>
+
+          <button type="submit">Apply Filters</button>
+        </form>
+      </div>
+
+      <!-- Artist Cards -->
       <div class="card">
         <h2>Artist Cards</h2>
         <div class="artist-grid">
@@ -72,7 +201,7 @@
         searchInput.value = "";
         suggestionsList.innerHTML = "";
 
-        // Redirect to the base URL (this ensures the backend sees no query parameter)
+        // Redirect to the homepage (no query parameters)
         window.location.href = "/";
       }
 
@@ -82,18 +211,18 @@
         const query = searchInput.value;
 
         if (query.length === 0) {
-          suggestionsList.innerHTML = ""; // Clear suggestions when input is empty
+          suggestionsList.innerHTML = "";
           return;
         }
 
         fetch(`/suggestions?query=${encodeURIComponent(query)}`)
           .then((response) => response.json())
           .then((suggestions) => {
-            suggestionsList.innerHTML = ""; // Clear existing suggestions
+            suggestionsList.innerHTML = "";
             suggestions.forEach((suggestion) => {
               const option = document.createElement("option");
               option.value = suggestion;
-              suggestionsList.appendChild(option); // Add suggestion to datalist
+              suggestionsList.appendChild(option);
             });
           })
           .catch((error) =>
