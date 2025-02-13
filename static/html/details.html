@@ -84,12 +84,20 @@
           </ul>
         </div>
       </div>
+
+      <!-- Map Section -->
+      <div class="section">
+        <h2>Concert Locations Map</h2>
+        <div id="map" style="width: 100%; height: 500px"></div>
+      </div>
     </div>
 
     <script>
       function goBack() {
         window.history.back();
       }
+
+      // Collapsible sections behavior
       document.addEventListener("DOMContentLoaded", function () {
         var collapsibles = document.querySelectorAll(".collapsible");
         collapsibles.forEach(function (collapsible) {
@@ -99,6 +107,62 @@
           });
         });
       });
+    </script>
+
+    <!-- Yandex Maps API (replace YOUR_API_KEY with your actual key) -->
+    <script
+      src="https://api-maps.yandex.ru/2.1/?apikey=YOUR_API_KEY&lang=en_US"
+      type="text/javascript"
+    ></script>
+    <script>
+      // Use pre‑marshaled JSON data from the Go template.
+      var locations = {{.LocJSON}};
+      var relationData = {{.RelJSON}};
+      console.log("Locations:", locations);
+      console.log("Relation Data:", relationData);
+
+      // Function to request geocode data from our API.
+      function getGeocodes(query, callback) {
+        var formData = new FormData();
+        formData.append("query", query);
+        fetch('/api/geocode', {
+          method: 'POST',
+          body: formData
+        })
+          .then(response => response.json())
+          .then(data => {
+            console.log("Geocode API returned:", data);
+            callback(data);
+          })
+          .catch(error => console.error('Error fetching geocodes:', error));
+      }
+
+      // Initialize Yandex Map and add markers.
+      function initMap() {
+        var map = new ymaps.Map("map", {
+          center: [45.58329, 24.761017],
+          zoom: 1
+        });
+
+        // Request geocodes for the provided locations.
+        getGeocodes(locations.join(','), function (geocodeData) {
+          geocodeData.forEach(function (item) {
+            var lat = parseFloat(item.Coords[0]);
+            var lon = parseFloat(item.Coords[1]);
+            var balloonContent = item.Name;
+            if (relationData[item.Name]) {
+              balloonContent += "<br>" + relationData[item.Name].join("<br>");
+            }
+            var placemark = new ymaps.Placemark([lat, lon], {
+              hintContent: item.Name,
+              balloonContent: balloonContent
+            });
+            map.geoObjects.add(placemark);
+          });
+        });
+      }
+
+      ymaps.ready(initMap);
     </script>
   </body>
 </html>

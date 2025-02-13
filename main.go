@@ -14,6 +14,7 @@ func main() {
 	http.HandleFunc("/search", server.SearchHandler)
 	http.HandleFunc("/suggestions", server.SuggestionsHandler)
 	http.HandleFunc("/filter", server.FilterHandler)
+	http.HandleFunc("/api/geocode", server.GeocodeHandler)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	fmt.Println("Server running at http://localhost:2004")
 	log.Fatal(http.ListenAndServe(":2004", nil))
