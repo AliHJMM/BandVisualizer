@@ -40,3 +40,4 @@ The application allows users to interact with the data through events and action
 
 - [Ali Hasan](https://github.com/AliHJMM)
 - [Habib Mansoor](https://github.com/7abib04)
+- [Husain Ali](https://github.com/hujafaar)
